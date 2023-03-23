@@ -1,0 +1,18 @@
+---
+ - name: User operations
+   hosts: all
+   become: true
+   vars:
+     user: "user"
+     password: "encrypted_password"
+     comment: "Description User"
+   tasks:
+     - name: Create user
+       ansible.builtin.user:
+         name: "{{ user }}"
+         comment: "{{ comment }}"
+         shell: /bin/bash
+         home: '/home/"{{ user }}"'
+         password: "{{ password }}"
+...
+
