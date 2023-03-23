@@ -1,0 +1,13 @@
+---
+ - name: User operations
+   hosts: update_python
+   become: true
+   vars:
+     pkg:
+       - python3
+   tasks:
+     - name: Install Package
+       ansible.builtin.yum:
+         name: "{{ pkg }}"
+         state: latest
+...

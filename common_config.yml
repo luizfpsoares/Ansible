@@ -1,0 +1,122 @@
+---
+ - name: User operations
+   hosts: all
+   become: true
+   vars:
+     redhat_packages:
+       - htop
+       - iotop
+       - tcpdump
+       - nfs-utils
+       - cifs-utils
+       - curl
+       - wget
+       - lsof
+       - telnet
+       - vim
+       - bzip2
+     debian_packages:
+       - htop
+       - iotop
+       - tcpdump
+       - nfs-common
+       - cifs-utils
+       - curl
+       - wget
+       - lsof
+       - telnet
+       - vim
+       - bzip2
+     timezone: America/Sao_Paulo
+       
+   tasks:
+     - name: Custom history and dmesg display
+       ansible.builtin.lineinfile:
+         path: /etc/profile
+         line: "{{ item }}"
+       with_items:
+         - '# Custom history display'
+         - 'export HISTTIMEFORMAT="%d/%m/%Y - %H:%M:%S - "'
+         - 'export HISTSIZE="5000"'
+         - 'export HISTFILESIZE="5000"'
+         - 'alias dmesg="dmesg -T"'
+
+     - name: Disable SELINUX in SO RedHat like (temp)
+       ansible.posix.selinux:
+         state: disabled
+       when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+     - name: Disable SELINUX in SO RedHat like
+       ansible.builtin.replace:
+         dest: /etc/sysconfig/selinux
+         regexp: 'SELINUX=enforcing'
+         replace: 'SELINUX=disabled'
+       when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+     - name: Disable Firewalld
+       ansible.builtin.service:
+         name: firewalld
+         enabled: false
+       when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+     - name: Update system and packages RedHat like
+       ansible.builtin.yum:
+         name: "*"
+         state: latest
+       when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+     - name: Update repo cache Debian like
+       ansible.builtin.apt:
+         update_cache: yes
+       when: ansible_distribution == "Debian" or ansible_distribution == "Ubuntu"
+     
+     - name: Update system and packages Debian like
+       ansible.builtin.apt:
+         name: "*"
+         state: latest
+       when: ansible_distribution == "Debian" or ansible_distribution == "Ubuntu"
+
+     - name: Change SSH Config RedHat Like
+       ansible.builtin.lineinfile:
+         path: /etc/ssh/sshd_config
+         regexp: '#PermitRootLogin yes'
+         line: 'PermitRootLogin prohibit-password'
+       when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+     - name: Change SSH Config Debian Like
+       ansible.builtin.lineinfile:
+         path: /etc/ssh/sshd_config
+         regexp: '#PermitRootLogin prohibit-password'
+         line: 'PermitRootLogin prohibit-password'
+       when: ansible_distribution == "Debian" or ansible_distribution == "Ubuntu"
+
+     - name: Restart SSH Service
+       ansible.builtin.service:
+         name: sshd
+         state: restarted
+     
+     - name: Install epel-release Redhat like
+       ansible.builtin.yum:
+         name: epel-release
+         state: present
+       when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+     - name: Install common packages Redhat like
+       ansible.builtin.yum:
+         name: "{{ redhat_packages }}"
+         state: present
+       when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+     - name: Install common packages Debian like
+       ansible.builtin.apt:
+         name: "{{ debian_packages }}"
+         state: present
+       when: ansible_distribution == "Debian" or ansible_distribution == "Ubuntu"
+
+     - name: Set Timezone
+       ansible.builtin.file:
+         src=/usr/share/zoneinfo/{{ timezone }}
+         dest=/etc/timezone
+         state=link
+         force=yes 
+...
