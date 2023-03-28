@@ -1,0 +1,18 @@
+---
+ - name: User operations
+   hosts: etcd
+   become: true
+   tasks:
+     - name: Install etcd
+       ansible.builtin.get_url:
+         url: https://github.com/etcd-io/etcd/releases/download/v3.5.7/etcd-v3.5.7-linux-amd64.tar.gz
+         dest: /tmp/etcd.tgz
+
+     - name: Discompact file
+       ansible.builtin.unarchive:
+         src: /tmp/etcd.tgz
+         dest: /usr/local/bin
+         extra_opts: [--strip-components=1]
+         remote_src: yes
+
+...
